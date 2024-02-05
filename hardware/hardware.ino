@@ -42,8 +42,8 @@
 
 
 // DEFINE THE CONTROL PINS FOR THE DHT22 & LED ARRAY
-#define DHTPIN 2
-#define DATA_PIN 3
+#define DHTPIN 32
+#define DATA_PIN 21
 
 
 
@@ -51,12 +51,12 @@
 // MQTT CLIENT CONFIG  
 static const char* pubtopic      = "620156694";                     // Add your ID number here
 static const char* subtopic[]    = {"620156694_sub","/elet2415"};   // Array of Topics(Strings) to subscribe to
-static const char* mqtt_server   = "www.yanacreations.com";         // Broker IP address or Domain name as a String 
+static const char* mqtt_server   = "dbs.msjrealtms.com";         // Broker IP address or Domain name as a String 
 static uint16_t mqtt_port        = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid       = "WPS";                       // Add your Wi-Fi ssid
-const char* password   = "W0LM3R$WP$";                // Add your Wi-Fi password 
+const char* ssid       = "MonaConnect";                       // Add your Wi-Fi ssid
+const char* password   = "";                // Add your Wi-Fi password 
 
 
 
@@ -111,7 +111,8 @@ void setup() {
   dht.begin();
 
   /* Add all other necessary sensor Initializations and Configurations here */
-  FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);  // GRB ordering is typical
+  // FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);  // GRB ordering is typical
+  LEDS.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
 
   initialize();     // INIT WIFI, MQTT & NTP 
   // vButtonCheckFunction(); // UNCOMMENT IF USING BUTTONS INT THIS LAB, THEN ADD LOGIC FOR INTERFACING WITH BUTTONS IN THE vButtonCheck FUNCTION
@@ -223,13 +224,27 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   if (strcmp(type, "controls") == 0){
     // 1. EXTRACT ALL PARAMETERS: NODES, RED,GREEN, BLUE, AND BRIGHTNESS FROM JSON OBJECT
-    const char* nodes   = doc["leds"]; 
-    const char* rgb     = doc["color"];
-    const char* bright  = doc["brightness"];
-    // 2. ITERATIVELY, TURN ON LED(s) BASED ON THE VALUE OF NODES. Ex IF NODES = 2, TURN ON 2 LED(s)
+    int nodes       = doc["leds"]; 
+    int brightness  = doc["brightness"];
+    int red         = doc["color"]["r"];
+    int green       = doc["color"]["g"];
+    int blue        = doc["color"]["b"];
 
+
+    // 2. ITERATIVELY, TURN ON LED(s) BASED ON THE VALUE OF NODES. Ex IF NODES = 2, TURN ON 2 LED(s)
+    for(unsigned char i=0; i<nodes; i++){
+      leds[i]=CRGB(red, green, blue);
+      FastLED.setBrightness(brightness);
+      FastLED.show();
+      delay(50);
+    }
     // 3. ITERATIVELY, TURN OFF ALL REMAINING LED(s).
-   
+    for(unsigned char x=nodes; x<NUM_LEDS; x++){
+      leds[x]=CRGB::Black;
+      FastLED.setBrightness(brightness);
+      FastLED.show();
+      delay(50);
+    }
   }
 }
 
@@ -268,15 +283,15 @@ double calcHeatIndex(double Temp, double Humid){
   // CALCULATE AND RETURN HEAT INDEX USING EQUATION FOUND AT https://byjus.com/heat-index-formula/#:~:text=The%20heat%20index%20formula%20is,an%20implied%20humidity%20of%2020%25
   double T    = convert_Celsius_to_fahrenheit(Temp);  // Temp in F
   double H_I  =  0;                 // Heat Index
-  double T2   = pow(f_temp,2);      // Relative temp (F) squared
+  double T2   = pow(Temp,2);        // Relative temp (F) squared
   double R2   = pow(Humid,2);       // Relative humidity squared
   float c1    = -42.379;
-  float c2    = -2.04901523;
-  float c3    = -10.14333127;
+  float c2    = 2.04901523;
+  float c3    = 10.14333127;
   float c4    = -0.22475541;
   double c5   = -6.83783e-3;
   double c6   = -5.481717e-2;
-  double c7   = -1.22874e-3;
+  double c7   = 1.22874e-3;
   double c8   = 8.5282e-4;
   double c9   = -1.99e-6;
 
