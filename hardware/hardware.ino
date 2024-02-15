@@ -55,9 +55,10 @@ static const char* mqtt_server   = "dbs.msjrealtms.com";         // Broker IP ad
 static uint16_t mqtt_port        = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid       = "MonaConnect";                       // Add your Wi-Fi ssid
-const char* password   = "";                // Add your Wi-Fi password 
-
+// const char* ssid       = "WPS";                       // Add your Wi-Fi ssid
+// const char* password   = "W0LM3R$WP$";                // Add your Wi-Fi password 
+const char* ssid       = "MonaConnect";
+const char* password   = "";
 
 
 
@@ -296,12 +297,12 @@ double calcHeatIndex(double Temp, double Humid){
   double c9   = -1.99e-6;
 
   // c1 + c2T + c3R + c4TR + c5T2 + c6R2 + c7T2R + c8TR2 + c9T2R2
-  H_I = (c1 + (c2*T) + (c3*Humid) + (c4*T*Humid) + (c5*T2) + (c6*R2) + (c7*T*Humid) + (c8*T*R2) + (c9*T*R2) );
-  return H_I;
+  // H_I = (c1 + (c2*T) + (c3*Humid) + (c4*T*Humid) + (c5*T2) + (c6*R2) + (c7*T*Humid) + (c8*T*R2) + (c9*T*R2) );
+  // return H_I;
 
   // obtained head_index from DHT in (C):
-  // float hic = dht.computeHeatIndex(t, h, false);
-  // return hic;
+  float hic = dht.computeHeatIndex(Temp, Humid, false);
+  return hic;
 }
 
 bool isNumber(double number){

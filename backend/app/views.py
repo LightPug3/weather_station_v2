@@ -31,8 +31,13 @@ def get_all(start,end):
    
     if request.method == "GET":
         '''Add your code here to complete this route'''
-
+        try:
+            all_data = mongo.getAllInRange(start,end)
+            if all_data:
+                return jsonify({"status":"found","data": all_data})   
     # FILE DATA NOT EXIST
+        except Exception as e:
+            print(f"get_all error: f{str(e)}")  
     return jsonify({"status":"not found","data":[]})
    
 

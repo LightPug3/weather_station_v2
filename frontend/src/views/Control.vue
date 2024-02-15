@@ -58,7 +58,7 @@ let timer, ID                   = 1000;
 
 // COMPUTED PROPERTIES
 const indicatorColor = computed(()=>{
-return `rgba(${led.color.r},${led.color.g},${led.color.b},${led.color.a})`
+    return `rgba(${led.color.r},${led.color.g},${led.color.b},${led.color.a})`
 })
 
 // FUNCTIONS

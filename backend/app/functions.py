@@ -70,7 +70,7 @@ class DB:
         '''RETURNS A LIST OF OBJECTS. THAT FALLS WITHIN THE START AND END DATE RANGE'''
         try:
             remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
-            result      = list(remotedb.ELET2415.climo.find('''Add your query here'''))
+            result      = list(remotedb.ELET2415.climo.find({self.datetime:start, }))
         except Exception as e:
             msg = str(e)
             print("getAllInRange error ",msg)            
