@@ -1,4 +1,6 @@
-# weather_station_v2
+# Weather_station_v2
+
+# ELET2415 Final Project - Mini Weather station
 
 ### Description
 The hardware is tasked with the reading of various sensor data. The hardware employs a DHT22 temperature and humidity sensor, a BMP280 pressure and temp sensor, and a capacitative soil moisture sensor. The collected sensor data must be published to a topic subscribed to by both the backend and frontend segments of the system. Furthermore, the hardware must process and execute actions in response to messages published to the topics to which it is subscribed. This comprehensive functionality ensures seamless control, monitoring, and responsiveness within the hydroponic cultivation environment.
