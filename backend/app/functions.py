@@ -55,7 +55,7 @@ class DB:
         '''ADD A NEW STORAGE LOCATION TO COLLECTION'''
         try:
             remotedb 	= self.remoteMongo('mongodb://%s:%s@%s:%s' % (self.username, self.password,self.server,self.port), tls=self.tls)
-            result      = remotedb.ELET2415.climo.insert_one(data)
+            result      = remotedb.ELET2415.weather_station.insert_one(data)       # define which collection to save data from hardware
         except Exception as e:
             msg = str(e)
             if "duplicate" not in msg:
