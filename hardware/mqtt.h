@@ -180,7 +180,7 @@ void checkHEAP(const char* Name){
 
 
 void initialize(void){
-  vLOOPFunction();     // INIT NTP PROTOCOL FOR TIME KEEPING   
+  vNTPFunction();     // INIT NTP PROTOCOL FOR TIME KEEPING   
 
   //CONNECT TO WIFI
   Serial.printf("Connecting to %s \n", ssid);

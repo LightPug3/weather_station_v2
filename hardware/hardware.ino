@@ -89,15 +89,16 @@ Adafruit_Sensor *bmp_pressure = bmp.getPressureSensor();
 // MQTT CLIENT CONFIG  
 static const char* pubtopic      = "620156694";                     // Add your ID number here
 static const char* subtopic[]    = {"620156694_sub","/elet2415"};   // Array of Topics(Strings) to subscribe to
-static const char* mqtt_server   = "broker.hivemq.com";         // Broker IP address or Domain name as a String 
+// static const char* mqtt_server   = "broker.hivemq.com";             // Broker IP address or Domain name as a String 
+static const char* mqtt_server   = "www.yanacreations.com";             // Broker IP address or Domain name as a String 
 static uint16_t mqtt_port        = 1883;
 
 
 // WIFI CREDENTIALS
-// const char* ssid       = "WPS";                       // Add your Wi-Fi ssid
-// const char* password   = "W0LM3R$WP$";                // Add your Wi-Fi password 
-const char* ssid       = "MonaConnect";
-const char* password   = "";
+const char* ssid       = "WPS";                       // Add your Wi-Fi ssid
+const char* password   = "W0LM3R$WP$";                // Add your Wi-Fi password 
+// const char* ssid       = "MonaConnect";
+// const char* password   = "";
 
 
 // TASK HANDLES 
@@ -131,7 +132,7 @@ int ledLevel              = 0;
 // int reading1              = 0;            // Value to be displayed
 int d                     = 0;            // Variable used for the sinewave test waveform
 int tesmod                = 0;
-int count                 = 0;
+// int count                 = 0;
 const int ledCount        = 8;
 uint32_t runTime          = -99999;       // time for next update
 int8_t ramp               = 1;
@@ -292,13 +293,12 @@ uint8_t snow[]  = {
   0x00, 0x00, 0x80, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+#ifndef NTP_H
+#include "NTP.h"
+#endif
 
 #ifndef MQTT_H
 #include "mqtt.h"
-#endif
-
-#ifndef NTP_H
-#include "NTP.h"
 #endif
 
 
@@ -379,7 +379,7 @@ void loop() {
 
   // soil moisture:
   soil_moisture = analogRead(soilMoisturePin);
-  mapped_soil_moisture = map(soil_moisture, 3300, 1500, 0, 4095);         // air, water, lowest percent, highest percent
+  mapped_soil_moisture = map(soil_moisture, 3200, 1400, 0, 100);         // air, water, lowest percent, highest percent
   
   // light sensor:
   lightIntensity = analogRead(LDRpin);
@@ -391,17 +391,19 @@ void loop() {
   ledLevel = map(h, 0, 100, 0, ledCount);                                       // led bar graph meter
   LEDBarGraph(ledLevel);
 
+  // deal with cases where raw analogue soil_moisture may occasionally exceed 3200 and go below 1400:
+  if(soil_moisture>3200){soil_moisture=3200;}
+  if(soil_moisture<1400){soil_moisture=1400;}
+
   // deal with cases where mapped_soil_moisture may occasionally exceed 100 and go below 0:
   if(mapped_soil_moisture>100){mapped_soil_moisture=100;}
-
   if(mapped_soil_moisture<0){mapped_soil_moisture=0;}
-
 
   // absolute humidity calculaton:
   ah = (6.112 * pow(2.71828, ((17.67 * t) / (243.5 + t))) * h * 2.1674) / (273.15 + t);
   
   // DEBGGING, TO REMOVE:
-  count+=1;
+  // count+=1;
 
   if (isnan(h) || isnan(t) || isnan(f)) {
     Serial.println("Failed to read DHT sensor!");
@@ -435,7 +437,7 @@ void loop() {
   // ringMeter(D, 0,40, 108,120,radius,"Dew P",GREEN );
 
   // Draw analogue meter: soil moisture (SOIL_MOISTURE)
-  ringMeter(soil_moisture, 0, 100, 108, 120, radius, "SOIL MOISTURE", GREEN);
+  ringMeter(mapped_soil_moisture, 0, 100, 108, 120, radius, "SOIL MOISTURE", GREEN);
 
   // update DHT temp. & unit
   tft.setCursor (32, 90);
@@ -534,8 +536,8 @@ void loop() {
   }
 
   // DEBUGGING, PRINTING TO CONSOLE:
-  Serial.print(count);
-  Serial.println();
+  // Serial.print(count);
+  // Serial.println();
 
   Serial.print("Temperature: ");
   Serial.print(t);
@@ -628,8 +630,10 @@ void vUpdate( void * pvParameters )  {
       doc["id"]               = "620156694";
       doc["timestamp"]        = getTimeStamp();
       doc["temperature"]      = t;
-      doc["pressure"]         = pressure;
+      doc["heat_index"]       = hic;
+      doc["dew_point"]        = D;
       doc["humidity"]         = h;
+      doc["pressure"]         = pressure;
       doc["altitude"]         = altitude;
       doc["soil_moisture"]    = soil_moisture;     // mapped_
 

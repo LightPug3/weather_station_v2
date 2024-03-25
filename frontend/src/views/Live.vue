@@ -1,79 +1,60 @@
 <template>
-    <v-container fluid background-color="surface" align="center">
-        <!-- row 1: -->
-        <v-row style="max-width: 1200px;">
-            <!-- col 1: -->
-            <v-col cols="9" >
-                <figure class="highcharts-figure">
-                    <div id="container">
-                        <!-- Temperature graph -->
-                    </div>
-                </figure>
-            </v-col>
-
-            <!-- col 2: -->
-            <v-col cols="3">
-                <!-- card 1: -->
-                <v-card style="margin-bottom: 5px;" max-width="500px" color="primaryContainer" subtitle="Temperature">
-                    <v-card-item>
-                        <span class="text-h3 text-onPrimaryContainer">{{ temperature }}</span>
-                    </v-card-item>
-                </v-card>
-                
-                <!-- card 2: -->
-                <v-card style="margin-bottom: 5px;" max-width="500px" color="tertiaryContainer" subtitle="Heat Index (Feels like)">
-                    <v-card-item>
-                        <span class="text-h3 text-onTertiaryContainer">{{ heatindex }}</span>
-                    </v-card-item>
-                </v-card>
-                
-                <!-- card 3: -->
-                <v-card style="margin-bottom: 5px;" max-width="500px" color="quaternaryContainer" subtitle="Humidity">
-                    <v-card-item>
-                        <span class="text-h3 text-onSecondaryContainer">{{ humidity }}</span>
-                    </v-card-item>
-                </v-card>
-            </v-col>
-        </v-row>
-
-        <!-- row 2: -->
-        <v-row style="max-width: 1200px;" justify="start">
-            <v-col cols="9">
-                <figure class="highcharts-figure">
-                    <div id="container1">
-                        <!-- Humidity graph -->
-                    </div>
-                </figure>
-            </v-col>
-        </v-row>
-</v-container>
+  <div>
+    <div id="container" style="width: 60%; max-width: 800px; margin: 0 auto;"></div>
+    <div class="row">
+      <div class="column" v-for="(data, label) in weatherData" :key="label">
+        <div v-if="label !== 'temperature' && label !== 'heatIndex' && label !== 'dewPoint'">
+          <div :id="label"></div>
+          <div class="variable-name">{{ label }}: {{ data }}{{ unit[label] }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 /** JAVASCRIPT HERE */
-
 // IMPORTS
 import { ref,reactive,watch ,onMounted,onBeforeUnmount,computed } from "vue";  
 import { useRoute ,useRouter } from "vue-router";
 import { useMqttStore } from '@/store/mqttStore'; // Import Mqtt Store
 import { storeToRefs } from "pinia";
 
-// Highcharts, Load the exporting module and Initialize exporting module.
 import Highcharts from 'highcharts';
+import JustGage from 'justgage';
 import more from 'highcharts/highcharts-more';
 import Exporting from 'highcharts/modules/exporting';
 Exporting(Highcharts);
 more(Highcharts);
- 
+
 // VARIABLES
 const router                    = useRouter();
 const route                     = useRoute();
 const Mqtt                      = useMqttStore();
 const { payload, payloadTopic } = storeToRefs(Mqtt);
-const tempHiChart               = ref(null);        // Temp Chart object
-const humHiChart                = ref(null);        // Hum Chart object
+const colGraphChart             = ref(null);
 const points                    = ref(10);          // Specify the quantity of points to be shown on the live graph simultaneously.
 const shift                     = ref(false);       // Delete a point from the left side and append a new point to the right side of the graph.
+
+const weatherData = {
+  temperature: 25,
+  humidity: 60,
+  heatIndex: 28,
+  dewPoint: 20,
+  pressure: 1007,
+  altitude: 51,
+  soilMoisture: 40
+};
+
+const unit = {
+  pressure: 'hPa',
+  altitude: 'm',
+  soilMoisture: '%',
+  humidity: '%'
+};
+
+const percentageData = {};
+
 
 // COMPUTED PROPERTIES
 const temperature = computed(()=>{
@@ -94,11 +75,30 @@ const humidity = computed(()=>{
     }
 });
 
-// FUNCTIONS
+const pressure = computed(()=>{
+    if(!!payload.value){
+        return `${payload.value.pressure.toFixed(2)} hPa`;
+    }
+});
+
+const altitude = computed(()=>{
+    if(!!payload.value){
+        return `${payload.value.altitude.toFixed(2)} m`;
+    }
+});
+
+const soil_moisture = computed(()=>{
+    if(!!payload.value){
+        return `${payload.value.soil_moisture.toFixed(2)} %`;
+    }
+});
+
+
+
 onMounted(()=>{
     // THIS FUNCTION IS CALLED AFTER THIS COMPONENT HAS BEEN MOUNTED
-    CreateCharts();
-    // CreateHumidChart();
+    CreateColumnGraph();
+    CreateRingMeters();
 
     Mqtt.connect(); // Connect to Broker located on the backend
 
@@ -109,86 +109,178 @@ onMounted(()=>{
     },3000);
 });
 
-
 onBeforeUnmount(()=>{
     // THIS FUNCTION IS CALLED RIGHT BEFORE THIS COMPONENT IS UNMOUNTED
     Mqtt.unsubcribeAll();
 });
+
 
 // WATCHERS
 watch(payload,(data)=> {
     if(points.value > 0){ points.value -- ; }
     else{ shift.value = true; }
 
- tempHiChart.value.series[0].addPoint({y:parseFloat(data.temperature.toFixed(2)) ,x: data.timestamp * 1000 },
-true, shift.value);
+    colGraphChart.value.series[0].addPoint({y:parseFloat(data.temperature.toFixed(2)) ,x: data.timestamp * 1000 }, true, shift.value);
 
- tempHiChart.value.series[1].addPoint({y:parseFloat(data.heatindex.toFixed(2)) ,x: data.timestamp * 1000 },
-true, shift.value);
+    colGraphChart.value.series[1].addPoint({y:parseFloat(data.heatindex.toFixed(2)) ,x: data.timestamp * 1000 }, true, shift.value);
 
-humHiChart.value.series[0].addPoint({y:parseFloat(data.humidity.toFixed(2)) ,x: data.timestamp * 1000 },
-true, shift.value);
+    // colGraphChart.value.series[2].addPoint({y:parseFloat(data.humidity.toFixed(2)) ,x: data.timestamp * 1000 }, true, shift.value);
 })
 
-const CreateCharts = async () => {
-    // TEMPERATURE & HEAT INDEX CHART:
-    tempHiChart.value = Highcharts.chart('container', {
+// create column graphs:
+const CreateColumnGraph = async () => {
+    colGraphChart.value = Highcharts.chart('container', {
+        // chart: { type: 'column' },                      // Change type to 'column' for column graph
         chart: { zoomType: 'x' },
-        title: { text: 'Air Temperature and Heat Index Analysis', align: 'left' },
+        title: { text: 'Air Temperature, Heat Index, and Dew Point Analysis', align: 'left' },
         yAxis: {
-            title: { text: 'Air Temperature & Heat Index' , style:{color:'#000000'}},
+            title: { text: 'Value °C', style: { color: '#000000' } },
             labels: { format: '{value} °C' }
         },
+        // xAxis: {
+        //     title: { text: 'Variables', style: { color: '#000000' } },
+        // },
         xAxis: {
             type: 'datetime',
             title: { text: 'Time', style:{color:'#000000'} },
         },
-        tooltip: { shared:true, },
+        tooltip: { shared: true },
         series: [
             {
                 name: 'Temperature',
                 type: 'spline',
                 data: [],
                 turboThreshold: 0,
-                color: Highcharts.getOptions().colors[0]
+                color: '#EA2525', // Change color for temperature column
+                // dataLabels: { enabled: true, color: 'black', formatter: function() { return this.y + '°C'; } } // Display value above column
             },
-        {
-            name: 'Heat Index',
-            type: 'spline',
-            data: [],
-            turboThreshold: 0,
-            color: Highcharts.getOptions().colors[1]
-        }],
-    });
-
-    // HUMIDITY CHART:
-    humHiChart.value = Highcharts.chart('container1', {
-        chart: { zoomType: 'x' },
-        title: { text: 'Humidity Analysis', align: 'left' },
-        yAxis: {
-            title: { text: 'Humidity' , style:{color:'#000000'}},
-            labels: { format: '{value} %' }
-        },
-        xAxis: {
-            type: 'datetime',
-            title: { text: 'Time', style:{color:'#000000'} },
-        },
-        tooltip: { shared:true, },
-        series: [
             {
-                name: 'Humidity',
+                name: 'Heat Index',
                 type: 'spline',
                 data: [],
                 turboThreshold: 0,
-                color: Highcharts.getOptions().colors[2]
-            }],
+                color: '#FF7400', // Change color for heat index column
+                // dataLabels: { enabled: true, color: 'black', formatter: function() { return this.y + '°C'; } } // Display value above column
+            }/*,
+            {
+                name: 'Dew Point',
+                type: 'spline',
+                data: [],
+                turboThreshold: 0,
+                color: '#31EE16', // Change color for dew point column
+                // dataLabels: { enabled: true, color: 'black', formatter: function() { return this.y + '°C'; } } // Display value above column
+            }*/
+        ],
+    //     chart: {
+    //         type: 'column',
+    //     },
+    //         title: {
+    //         text: 'Temperature Related Data'
+    //     },
+    //         xAxis: {
+    //         categories: ['Temperature', 'Heat Index', 'Dew Point']
+    //     },
+    //         yAxis: {
+    //         title: {
+    //             text: 'Unit: °C'
+    //         }
+    //     },
+    //     series: [{
+    //         data: [
+    //             {
+    //                 y: /*weatherData.*/temperature,
+    //                 dataLabels: {
+    //                     enabled: true,
+    //                     format: /*weatherData.*/temperature + '°C',
+    //                     color: 'black'
+    //                 }
+    //             },
+    //             {
+    //                 y: /*weatherData.*/heatindex,
+    //                 dataLabels: {
+    //                     enabled: true,
+    //                     format: /*weatherData.*/heatindex + '°C',
+    //                     color: 'black'
+    //                 }
+    //             },
+    //             {
+    //                 y: /*weatherData.*/humidity,
+    //                 dataLabels: {
+    //                     enabled: true,
+    //                     format: /*weatherData.*/humidity + '°C',
+    //                     color: 'black'
+    //                 }
+    //             }
+    //         ]
+    //     }],
+    //     plotOptions: {
+    //         column: {
+    //             colorByPoint: true,
+    //             colors: ['#EA2525', '#FF7400', '#31EE16']
+    //         }
+    //     }
     });
+};
+
+// create ring meters:
+const CreateRingMeters = () => {
+  for (const [label, raw_value] of Object.entries(weatherData)) {
+    if (label === 'pressure' || label === 'altitude' || label === 'soilMoisture' || label === 'humidity') {
+      createRingMeter(label, raw_value);
+    }
+  }
+};
+
+const createRingMeter = (label, raw_value) => {
+  let range;
+  if (label === 'pressure') {
+    range = { min: 888, max: 1031 };
+  } else if (label === 'altitude') {
+    range = { min: 0, max: 2256 };
+  } else if (label === 'soilMoisture') {
+    range = { min: 0, max: 100 };
+  } else if (label === 'humidity') {
+    range = { min: 0, max: 100 };
+  }
+  const percentage = ((raw_value - range.min) / (range.max - range.min)) * 100;
+  percentageData[label] = raw_value;
+  const div = document.createElement('div');
+  div.id = label;
+  document.querySelector('.row').appendChild(div);
+  const gauge = new JustGage({
+    id: label,
+    value: raw_value,
+    min: range.min,
+    max: range.max,
+    title: label.charAt(0).toUpperCase() + label.slice(1),
+    label: unit[label],
+    donut: true,
+    gaugeWidthScale: 0.4,
+    counter: true,
+    relativeGaugeSize: true,
+    levelColors: ['#F39C12', '#01276', '#09A4E7', '#E74C3C']
+  });
+  gauge.refresh(raw_value);
 };
 </script>
 
 <style scoped>
 /** CSS STYLE HERE */
-Figure {
-    border: 2px solid black;
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+.column {
+    /*width: 200px; /* Adjust the width as needed */
+    margin: 10px;
+    /* text-align: center; */
+}
+.variable-name {
+    margin-top: 5px;
+    /* font-size: 14px; */
+    margin-left: 90px;
 }
 </style>

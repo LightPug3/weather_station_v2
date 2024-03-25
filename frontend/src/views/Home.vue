@@ -4,15 +4,15 @@
     <VResponsive class="align-center text-center fill-height">
       <VImg height="350" class="mb-5" src="@/assets/logo.svg" />
 
-      <div class="text-body-2 font-weight-light mb-n1">Welcome to</div>
+      <div class="text-h3 font-weight-light mb-n1">Welcome to</div>
 
-      <h1 class="text-h2 font-weight-bold">Elet2415</h1>
-      <div class="text-body-1 font-weight-light mt-1">Practices in Electronics II</div>
+      <h1 class="text-h3 font-weight-bold">Nathan's Mini Weather Station</h1>
+      <div class="text-h4 font-weight-light mt-1">Remote Monitoring Website</div>
  
 
       <div class="py-14" />
 
-      <VRow class="d-flex align-center justify-center">
+      <!-- <VRow class="d-flex align-center justify-center">
         <VCol cols="auto">
           <VBtn
             href="https://vuetifyjs.com/components/all/"
@@ -56,7 +56,7 @@
             Community
           </VBtn>
         </VCol>
-      </VRow>
+      </VRow> -->
     </VResponsive>
   </VContainer>
 
