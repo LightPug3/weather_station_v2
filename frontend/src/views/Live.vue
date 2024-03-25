@@ -1,11 +1,51 @@
 <template>
   <div>
-    <div id="container" style="width: 60%; max-width: 800px; margin: 0 auto;"></div>
+    <v-row>
+      <v-col>
+        <div id="container" style="width: 90%; max-width: 800px; margin: 0 auto;"></div>
+      </v-col>
+
+      <!-- col 2: -->
+      <v-col cols="3">
+        <!-- card 1: -->
+        <v-card style="margin-bottom: 5px;" max-width="200px" color="primaryContainer" subtitle="Humidity">
+            <v-card-item>
+              <span class="text-onPrimaryContainer">{{ humidity }}</span>
+            </v-card-item>
+        </v-card>
+        
+        <!-- card 2: -->
+        <v-card style="margin-bottom: 5px;" max-width="200px" color="tertiaryContainer" subtitle="Pressure">
+            <v-card-item>
+                <span class="text-onTertiaryContainer">{{ pressure }}</span>
+            </v-card-item>
+        </v-card>
+        
+        <!-- card 3: -->
+        <v-card style="margin-bottom: 5px;" max-width="200px" color="quaternaryContainer" subtitle="Altitude">
+            <v-card-item>
+                <span class="text-onSecondaryContainer">{{ altitude }}</span>
+            </v-card-item>
+        </v-card>
+
+        <!-- card 3: -->
+        <v-card style="margin-bottom: 5px;" max-width="200px" color="quaternaryContainer" subtitle="Soil Moisture">
+            <v-card-item>
+                <span class="text-onSecondaryContainer">{{ soil_moisture }}</span>
+            </v-card-item>
+        </v-card>
+      </v-col>
+    </v-row>
+
     <div class="row">
       <div class="column" v-for="(data, label) in weatherData" :key="label">
-        <div v-if="label !== 'temperature' && label !== 'heatIndex' && label !== 'dewPoint'">
+        <div v-if="label !== 'temperature' && label !== 'heat_index' && label !== 'dew_point'">
           <div :id="label"></div>
-          <div class="variable-name">{{ label }}: {{ data }}{{ unit[label] }}</div>
+          <!-- <div class="variable-name">{{ label }}: {{ data }}{{ unit[label] }}</div> -->
+          <span class="text-onPrimaryContainer">{{ humidity }}</span>
+          <span class="text-onPrimaryContainer">{{ pressure }}</span>
+          <span class="text-onPrimaryContainer">{{ altitude }}</span>
+          <span class="text-onPrimaryContainer">{{ soil_moisture }}</span>
         </div>
       </div>
     </div>
@@ -39,22 +79,22 @@ const shift                     = ref(false);       // Delete a point from the l
 const weatherData = {
   temperature: 25,
   humidity: 60,
-  heatIndex: 28,
-  dewPoint: 20,
+  heat_index: 28,
+  dew_point: 20,
   pressure: 1007,
   altitude: 51,
-  soilMoisture: 40
+  soil_moisture: 40
 };
 
 const unit = {
   pressure: 'hPa',
   altitude: 'm',
-  soilMoisture: '%',
+  soil_moisture: '%',
   humidity: '%'
 };
 
 const percentageData = {};
-
+const gauges = {}; // Store gauge instances
 
 // COMPUTED PROPERTIES
 const temperature = computed(()=>{
@@ -121,25 +161,23 @@ watch(payload,(data)=> {
     else{ shift.value = true; }
 
     colGraphChart.value.series[0].addPoint({y:parseFloat(data.temperature.toFixed(2)) ,x: data.timestamp * 1000 }, true, shift.value);
+    colGraphChart.value.series[1].addPoint({y:parseFloat(data.heat_index.toFixed(2)) ,x: data.timestamp * 1000 }, true, shift.value);
+    colGraphChart.value.series[2].addPoint({y:parseFloat(data.dew_point.toFixed(2)) ,x: data.timestamp * 1000 }, true, shift.value);
+});
 
-    colGraphChart.value.series[1].addPoint({y:parseFloat(data.heatindex.toFixed(2)) ,x: data.timestamp * 1000 }, true, shift.value);
-
-    colGraphChart.value.series[2].addPoint({y:parseFloat(data.humidity.toFixed(2)) ,x: data.timestamp * 1000 }, true, shift.value);
-})
+watch(payload, (data) => {
+  updateRingMeters();
+});
 
 // create column graphs:
 const CreateColumnGraph = async () => {
     colGraphChart.value = Highcharts.chart('container', {
-        // chart: { type: 'column' },                      // Change type to 'column' for column graph
         chart: { zoomType: 'x' },
         title: { text: 'Air Temperature, Heat Index, and Dew Point Analysis', align: 'left' },
         yAxis: {
             title: { text: 'Value °C', style: { color: '#000000' } },
             labels: { format: '{value} °C' }
         },
-        // xAxis: {
-        //     title: { text: 'Variables', style: { color: '#000000' } },
-        // },
         xAxis: {
             type: 'datetime',
             title: { text: 'Time', style:{color:'#000000'} },
@@ -169,7 +207,7 @@ const CreateColumnGraph = async () => {
                 turboThreshold: 0,
                 color: '#31EE16', // Change color for dew point column
                 // dataLabels: { enabled: true, color: 'black', formatter: function() { return this.y + '°C'; } } // Display value above column
-            }/**/
+            }
         ],
     });
 };
@@ -186,16 +224,7 @@ const CreateRingMeters = () => {
 
 const createRingMeter = (label, raw_value) => {
   console.log("Label:", label, "Value:", raw_value); // Debug statement
-  let range;
-  if (label === 'humidity') {
-    range = { min: 0, max: 100 };
-  } else if (label === 'pressure') {
-    range = { min: 888, max: 1031 };
-  } else if (label === 'altitude') {
-    range = { min: 0, max: 2256 };
-  } else if (label === 'soil_moisture') {
-    range = { min: 0, max: 100 };
-  }
+  const range = getRange(label);
   const percentage = ((raw_value - range.min) / (range.max - range.min)) * 100;
   percentageData[label] = raw_value;
   const div = document.createElement('div');
@@ -216,6 +245,47 @@ const createRingMeter = (label, raw_value) => {
   });
   gauge.refresh(raw_value);
 };
+
+
+// update ring meters:
+const updateRingMeters = () => {
+  for (const [label, raw_value] of Object.entries(payload.value)) {
+    if (label === 'humidity' || label === 'pressure' || label === 'altitude' || label === 'soil_moisture') {
+      updateRingMeter(label, raw_value);
+    }
+  }
+};
+
+const updateRingMeter = (label, raw_value) => {
+  const range = getRange(label);
+  const percentage = ((raw_value - range.min) / (range.max - range.min)) * 100;
+  percentageData[label] = raw_value;
+  if (gauges[label]) {
+    gauges[label].refresh(raw_value);
+  }
+};
+
+const getRange = (label) => {
+  if (label === 'humidity') {
+    return { min: 0, max: 100 };
+  } else if (label === 'pressure') {
+    return { min: 888, max: 1031 };
+  } else if (label === 'altitude') {
+    return { min: 0, max: 2256 };
+  } else if (label === 'soil_moisture') {
+    return { min: 0, max: 100 };
+  }
+};
+
+
+// function refreshPage() {
+//   window.location.reload();
+// }
+// // Set the interval for auto-refresh (in milliseconds)
+// var refreshInterval = 5000; // 5 seconds
+
+// // Call the refreshPage function after the specified interval
+// setTimeout(refreshPage, refreshInterval);
 </script>
 
 <style scoped>

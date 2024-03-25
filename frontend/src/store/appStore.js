@@ -45,6 +45,8 @@ export const useAppStore = defineStore('app', () => {
         return []
     }
 
+
+
     const getTemperatureMMAR = async (start, end) => {
         // FETCH REQUEST WILL TIMEOUT AFTER 20 SECONDS
         const controller = new AbortController();
@@ -78,6 +80,8 @@ export const useAppStore = defineStore('app', () => {
         return []
     }
 
+
+
     const getHumidityMMAR = async (start, end) => {
         // FETCH REQUEST WILL TIMEOUT AFTER 20 SECONDS
         const controller = new AbortController();
@@ -110,6 +114,8 @@ export const useAppStore = defineStore('app', () => {
         }
         return []
     }
+
+
 
     const getFreqDistro = async (variable, start, end) => {
         // FETCH REQUEST WILL TIMEOUT AFTER 20 SECONDS
@@ -145,6 +151,8 @@ export const useAppStore = defineStore('app', () => {
     }
 
     // STATES 
+
+
 
     // ACTIONS
 
