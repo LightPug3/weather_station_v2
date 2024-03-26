@@ -168,7 +168,7 @@ const CreateCharts = async () => {
       labels: { format: "{value} °C" },
     },
     tooltip: {
-      pointFormat: "Heatindex: {point.x} °C <br/> Temperature: {point.y} °C",
+      pointFormat: "heat_index: {point.x} °C <br/> Temperature: {point.y} °C",
     },
     xAxis: {
       type: "datetime",
@@ -344,7 +344,7 @@ const updateLineCharts = async () => {
     const data = await AppStore.getAllInRange(startDate, endDate);
     // Create arrays for each plot
     let temperature = [];
-    let heatindex = [];
+    let heat_index = [];
     let humidity = [];
   
     // Iterate through data variable and transform object to format recognized by highcharts
@@ -354,9 +354,9 @@ const updateLineCharts = async () => {
         x: row.timestamp * 1000,
         y: parseFloat(row.temperature.toFixed(2)),
       });
-      heatindex.push({
+      heat_index.push({
         x: row.timestamp * 1000,
-        y: parseFloat(row.heatindex.toFixed(2)),
+        y: parseFloat(row.heat_index.toFixed(2)),
       });
       humidity.push({
         x: row.timestamp * 1000,
@@ -365,7 +365,7 @@ const updateLineCharts = async () => {
     });
     // Add data to Temperature and Heat Index chart
     tempHiLine.value.series[0].setData(temperature);
-    tempHiLine.value.series[1].setData(heatindex);
+    tempHiLine.value.series[1].setData(heat_index);
     humLine.value.series[0].setData(humidity);
   }
 };
@@ -399,13 +399,13 @@ const updateHistogramCharts = async () => {
   if (!!start.value && !!end.value) {
     const temp = await AppStore.getFreqDistro( "temperature", startDate, endDate );
     const humid = await AppStore.getFreqDistro("humidity", startDate, endDate);
-    const hi = await AppStore.getFreqDistro("heatindex", startDate, endDate);
-    // 3. create an empty array for each variable (temperature, humidity and heatindex)
+    const hi = await AppStore.getFreqDistro("heat_index", startDate, endDate);
+    // 3. create an empty array for each variable (temperature, humidity and heat_index)
     // see example below
   
     let temperature = [];
     let humidity = [];
-    let heatindex = [];
+    let heat_index = [];
     temp.forEach((row) => {
       temperature.push({ x: row["_id"], y: row["count"] });
     });
@@ -413,12 +413,12 @@ const updateHistogramCharts = async () => {
       humidity.push({ x: row["_id"], y: row["count"] });
     });
     hi.forEach((row) => {
-      heatindex.push({ x: row["_id"], y: row["count"] });
+      heat_index.push({ x: row["_id"], y: row["count"] });
     });
     
     histo.value.series[0].setData(temperature);
     histo.value.series[1].setData(humidity);
-    histo.value.series[2].setData(heatindex);
+    histo.value.series[2].setData(heat_index);
   }
 };
 
@@ -436,14 +436,14 @@ const updateScatter = async () => {
     data.forEach((row) => {
       scatterPoints1.push({
         x: parseFloat(row.temperature.toFixed(2)),
-        y: parseFloat(row.heatindex.toFixed(2)),
+        y: parseFloat(row.heat_index.toFixed(2)),
       });
     });
 
     data.forEach((row) => {
       scatterPoints2.push({
         x: parseFloat(row.humidity.toFixed(2)),
-        y: parseFloat(row.heatindex.toFixed(2)),
+        y: parseFloat(row.heat_index.toFixed(2)),
       });
     });
     // Add data to Temperature and Heat Index chart
