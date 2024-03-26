@@ -134,7 +134,7 @@ const soil_moisture = computed(()=>{
 });
 
 
-
+// LIFECYCLE HOOKS
 onMounted(()=>{
     // THIS FUNCTION IS CALLED AFTER THIS COMPONENT HAS BEEN MOUNTED
     CreateColumnGraph();
@@ -276,16 +276,6 @@ const getRange = (label) => {
     return { min: 0, max: 100 };
   }
 };
-
-
-// function refreshPage() {
-//   window.location.reload();
-// }
-// // Set the interval for auto-refresh (in milliseconds)
-// var refreshInterval = 5000; // 5 seconds
-
-// // Call the refreshPage function after the specified interval
-// setTimeout(refreshPage, refreshInterval);
 </script>
 
 <style scoped>

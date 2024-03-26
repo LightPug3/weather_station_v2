@@ -95,21 +95,21 @@ static uint16_t mqtt_port        = 1883;
 
 
 // WIFI CREDENTIALS
-// const char* ssid       = "WPS";                       // Add your Wi-Fi ssid
-// const char* password   = "W0LM3R$WP$";                // Add your Wi-Fi password 
-const char* ssid       = "MonaConnect";
-const char* password   = "";
+const char* ssid       = "WPS";                       // Add your Wi-Fi ssid
+const char* password   = "W0LM3R$WP$";                // Add your Wi-Fi password 
+// const char* ssid       = "MonaConnect";
+// const char* password   = "";
 // const char* ssid       = "Nathan's iPhone";
 // const char* password   = "nathan123";
 
 
 
 // TASK HANDLES 
-TaskHandle_t xMQTT_Connect          = NULL; 
-TaskHandle_t xNTPHandle             = NULL;  
-TaskHandle_t xLOOPHandle            = NULL;  
+TaskHandle_t xMQTT_Connect          = NULL;
+TaskHandle_t xNTPHandle             = NULL;
+TaskHandle_t xLOOPHandle            = NULL;
 TaskHandle_t xUpdateHandle          = NULL;
-TaskHandle_t xButtonCheckeHandle    = NULL;  
+TaskHandle_t xButtonCheckeHandle    = NULL;
 
 
 /* Declare and Initialize variables to use in code: */
