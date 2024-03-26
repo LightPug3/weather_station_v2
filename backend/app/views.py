@@ -25,7 +25,7 @@ from math import floor
 #   Routing for your application    #
 #####################################
 
-@app.route('/api/climo/get/<start>/<end>', methods=['GET']) 
+@app.route('/api/weather_station/get/<start>/<end>', methods=['GET']) 
 def get_all(start,end):   
     start = int(start)
     end = int(end)
@@ -97,6 +97,43 @@ def get_humidity_mmar(start,end):
     return jsonify({"status":"not found","data":[]})
 
 
+@app.route('/api/mmar/pressure/<start>/<end>', methods=['GET'])
+def get_pressure_mmar(start, end):
+        '''RETURNS MIN, MAX, AVG AND RANGE FOR PRESSURE. THAT FALLS WITHIN THE START AND END DATE RANGE'''
+        start= int(start)
+        end= int(end)
+        print(f"Start Date: {start}")
+        print(f"End Date: {end}")
+
+        if request.method == "GET":
+            try:
+                item= mongo.pressureMMAR(start, end)
+                if item:
+                    return jsonify({"status":"found","data":item})
+            
+            except Exception as e:
+                msg = str(e)
+                print(f"get_all error: f{str(e)}")
+
+            return jsonify({"status":"not found","data":[]})
+
+@app.route('/api/mmar/soil/<start>/<end>', methods=['GET'])
+def get_soil_mmar(start, end):
+        '''RETURNS MIN, MAX, AVG AND RANGE FOR SOIL MOISTURE. THAT FALLS WITHIN THE START AND END DATE RANGE'''
+        start= int(start)
+        end= int(end)
+
+        if request.method == "GET":
+            try:
+                item= mongo.soilMMAR(start, end)
+                if item:
+                    return jsonify({"status":"found","data":item})
+            
+            except Exception as e:
+                msg = str(e)
+                print(f"get_all error: f{str(e)}")
+
+            return jsonify({"status":"not found","data":[]})
 
 
 
